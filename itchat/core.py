@@ -57,6 +57,10 @@ class Core(object):
                 - and modified according to your own demand
         '''
         raise NotImplementedError()
+
+    def sync_check(self):
+        raise NotImplementedError()
+
     def get_QRuuid(self):
         ''' get uuid for qrcode
             uuid is the symbol of qrcode
