@@ -346,7 +346,8 @@ def get_msg(self):
         'ContentType': 'application/json; charset=UTF-8',
         'User-Agent': config.USER_AGENT}
     r = self.s.post(url, data=json.dumps(data), headers=headers, timeout=config.TIMEOUT)
-    # logger.debug(r.content)
+    logger.debug(r.content)
+    print r.content
     dic = json.loads(r.content.decode('utf-8', 'replace'))
     if dic['BaseResponse']['Ret'] != 0: return None, None
     self.loginInfo['SyncKey'] = dic['SyncCheckKey']
