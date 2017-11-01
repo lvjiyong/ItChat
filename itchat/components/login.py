@@ -35,7 +35,7 @@ def load_login(core):
 
 
 def login(self, enableCmdQR=False, picDir=None, qrCallback=None,
-          loginCallback=None, exitCallback=None):
+          loginCallback=None, exitCallback=None, init_call_back=None, auto_start_receiving=True):
     if self.alive or self.isLogging:
         logger.warning('itchat has already logged in.')
         return
@@ -72,7 +72,7 @@ def login(self, enableCmdQR=False, picDir=None, qrCallback=None,
     else:
         return  # log in process is stopped by user
     logger.info('Loading the contact, this may take a little while.')
-    self.web_init()
+    self.web_init(request_call_back=init_call_back)
     self.show_mobile_login()
     self.get_contact(True)
     if hasattr(loginCallback, '__call__'):
@@ -82,7 +82,8 @@ def login(self, enableCmdQR=False, picDir=None, qrCallback=None,
         if os.path.exists(picDir or config.DEFAULT_QR):
             os.remove(picDir or config.DEFAULT_QR)
         logger.info('Login successfully as %s' % self.storageClass.nickName)
-    self.start_receiving(exitCallback)
+    if auto_start_receiving:
+        self.start_receiving(exitCallback)
     self.isLogging = False
 
 
@@ -194,13 +195,15 @@ def process_login_info(core, loginContent):
     return True
 
 
-def web_init(self):
+def web_init(self, request_call_back=None):
     url = '%s/webwxinit?r=%s' % (self.loginInfo['url'], int(time.time()))
     data = {'BaseRequest': self.loginInfo['BaseRequest'], }
     headers = {
         'ContentType': 'application/json; charset=UTF-8',
         'User-Agent': config.USER_AGENT, }
     r = self.s.post(url, data=json.dumps(data), headers=headers)
+    if hasattr(request_call_back, '__call__'):
+        request_call_back(r)
     dic = json.loads(r.content.decode('utf-8', 'replace'))
     # deal with login info
     utils.emoji_formatter(dic['User'], 'NickName')
@@ -300,7 +303,7 @@ def start_receiving(self, exitCallback=None, getReceivingFnOnly=False):
         maintainThread.start()
 
 
-def sync_check(self):
+def sync_check(self, request_call_back=None):
     url = '%s/synccheck' % self.loginInfo.get('syncUrl', self.loginInfo['url'])
     params = {
         'r': int(time.time() * 1000),
@@ -313,7 +316,11 @@ def sync_check(self):
     headers = {'User-Agent': config.USER_AGENT}
     try:
         r = self.s.get(url, params=params, headers=headers, timeout=config.TIMEOUT)
-        logger.debug(r.content)
+        # logger.debug(r.content)
+
+        if hasattr(request_call_back, '__call__'):
+            request_call_back(r)
+
     except requests.exceptions.ConnectionError as e:
         try:
             if not isinstance(e.args[0].args[1], BadStatusLine):
@@ -334,7 +341,7 @@ def sync_check(self):
     return pm.group(2)
 
 
-def get_msg(self):
+def get_msg(self, request_call_back=None):
     url = '%s/webwxsync?sid=%s&skey=%s&pass_ticket=%s' % (
         self.loginInfo['url'], self.loginInfo['wxsid'],
         self.loginInfo['skey'], self.loginInfo['pass_ticket'])
@@ -346,8 +353,10 @@ def get_msg(self):
         'ContentType': 'application/json; charset=UTF-8',
         'User-Agent': config.USER_AGENT}
     r = self.s.post(url, data=json.dumps(data), headers=headers, timeout=config.TIMEOUT)
-    logger.debug(r.content)
-    print r.content
+    # logger.debug(r.content)
+    # print r.content
+    if hasattr(request_call_back, '__call__'):
+        request_call_back(r)
     dic = json.loads(r.content.decode('utf-8', 'replace'))
     if dic['BaseResponse']['Ret'] != 0: return None, None
     self.loginInfo['SyncKey'] = dic['SyncCheckKey']

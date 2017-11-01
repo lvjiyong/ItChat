@@ -30,7 +30,7 @@ class Core(object):
         self.useHotReload, self.hotReloadDir = False, 'itchat.pkl'
         self.receivingRetryCount = 5
     def login(self, enableCmdQR=False, picDir=None, qrCallback=None,
-            loginCallback=None, exitCallback=None):
+            loginCallback=None, exitCallback=None,init_call_back=None,auto_start_receiving=True):
         ''' log in like web wechat does
             for log in
                 - a QR code will be downloaded and opened
@@ -58,7 +58,7 @@ class Core(object):
         '''
         raise NotImplementedError()
 
-    def sync_check(self):
+    def sync_check(self, request_call_back=None):
         raise NotImplementedError()
 
     def get_QRuuid(self):
@@ -99,7 +99,7 @@ class Core(object):
             it is defined in components/login.py
         '''
         raise NotImplementedError()
-    def web_init(self):
+    def web_init(self,request_call_back=None):
         ''' get info necessary for initializing
             for processing:
                 - own account info is set
@@ -128,7 +128,7 @@ class Core(object):
             it is defined in components/login.py
         '''
         raise NotImplementedError()
-    def get_msg(self):
+    def get_msg(self,request_call_back=None):
         ''' fetch messages
             for fetching
                 - method blocks for sometime util
@@ -403,7 +403,7 @@ class Core(object):
         raise NotImplementedError()
     def auto_login(self, hotReload=False, statusStorageDir='itchat.pkl',
             enableCmdQR=False, picDir=None, qrCallback=None,
-            loginCallback=None, exitCallback=None):
+            loginCallback=None, exitCallback=None,init_call_back=None):
         ''' log in like web wechat does
             for log in
                 - a QR code will be downloaded and opened
